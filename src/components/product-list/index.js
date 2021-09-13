@@ -7,7 +7,6 @@ export default class ProductList extends Component {
     }
 
     render() {
-
         return (
             <div className="layout-row wrap justify-content-center flex-70 app-product-list">
                 {this.props.products.map((product, i) => {
@@ -23,13 +22,29 @@ export default class ProductList extends Component {
                                     <p className="ma-0 mt-8 text-center">${product.price}</p>
                                 </div>
                                 <div className="card-actions justify-content-center pa-4">
-                                    <button className="x-small outlined" data-testid="btn-item-add">
+                                {product.cartQuantity==0 ?
+                                    <button className="x-small outlined" data-testid="btn-item-add"
+                                     onClick={()=>{this.props.add(product);}}>
                                         Add To Cart
                                     </button>
+                                    :
+                                    <div className="layout-row justify-content-between align-items-center">
+                                        <button className="x-small icon-only outlined"
+                                                data-testid="btn-quantity-subtract"
+                                                onClick={()=>this.props.sub(product)}>
+                                            <i className="material-icons">remove</i>
+                                        </button>
 
-                                    <button className="x-small danger" data-testid="btn-item-remove">
-                                        Remove
-                                    </button>
+                                        <input type="number"
+                                               disabled
+                                               className="cart-quantity" data-testid="cart-quantity" value={product.cartQuantity}/>
+
+                                        <button className="x-small icon-only outlined"
+                                                data-testid="btn-quantity-add" onClick={()=>this.props.add(product)}>
+                                            <i className="material-icons">add</i>
+                                        </button>
+                                    </div>
+                                }
                                 </div>
                             </div>
                         </section>
@@ -42,3 +57,7 @@ export default class ProductList extends Component {
     }
 }
 
+export const UpdateMode = {
+    ADD: 1,
+    SUBTRACT: 0
+}
