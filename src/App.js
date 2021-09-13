@@ -22,49 +22,63 @@ class App extends Component {
                 totalPrice: 0,
                 discount: 0,
                 selectedCoupon: '0'
+import React, {Component} from 'react';
+import './App.css';
+import 'h8k-components';
+import ProductList from "./components/product-list";
+import Cart from "./components/cart";
+
+const title = "HackerShop";
+
+class App extends Component {
+    constructor() {
+        super();
+        const products = [...PRODUCTS].map((product, index) => {
+            product.id = index + 1;
+            product.image = `/images/items/${product.name.toLocaleLowerCase()}.png`;
+            product.cartQuantity = 0;
+            return product;
+        });
+        this.state = {
+            cart: {
+                items: []
             },
             products
         }
-        this.addToCart = this.addToCart.bind(this);
-        this.removeFromCart = this.removeFromCart.bind(this);
     }
 
-    addToCart(index) {
-        const products = this.state.products;
-        products[index].cartQuantity = 1;
-        let cart = {...this.state.cart};
-        cart.items.push({
-            id: products[index].id,
-            price: products[index].price,
-            item: products[index].heading,
-            quantity: 1
+    subItem=(items)=>{
+        const products = [...this.state.products].map((product, index) => {
+            if(product.id === items.id && items.cartQuantity > 0){
+                product.cartQuantity = items.cartQuantity - 1;
+            }
+            return product;
         });
-        this.setState({
-            products,
-            cart
-        })
+        this.updateCartState(products);
     }
 
-    removeFromCart(index) {
-        const products = this.state.products;
-        products[index].cartQuantity = 0;
-        let cart = {...this.state.cart};
-        let cartIndex = this.state.cart.items.findIndex(item => item.id === products[index].id);
-        cart.items.splice(cartIndex, 1);
-        this.setState({
-            cart,
-            products
-        })
+    addItem=(items)=>{
+        const products = [...this.state.products].map((product, index) => {
+            if(product.id === items.id){
+                product.cartQuantity = items.cartQuantity + 1;
+            }
+            return product;
+        });
+        this.updateCartState(products);
     }
 
+    updateCartState=(products)=>{
+        const items = [...this.state.products].filter(product => product.cartQuantity > 0);
+        // const items = [...this.state.cart.items].filter(product => product.cartQuantity > 0); //maintain order of insertion
+        this.setState({cart: {items}, products});
+    }
 
     render() {
-
         return (
             <div>
                 <h8k-navbar header={title}></h8k-navbar>
                 <div className="layout-row shop-component">
-                    <ProductList products={this.state.products}/>
+                    <ProductList add={this.addItem} sub={this.subItem} products={this.state.products}/>
                     <Cart cart={this.state.cart}/>
                 </div>
             </div>
