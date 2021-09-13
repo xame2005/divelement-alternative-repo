@@ -38,5 +38,17 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "- React Version: 16.13.1\r - Node Version: ^12.18.3\r - Default Port: 8000",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xame2005/divelement-alternative-repo.git"
+  },
+  "author": "Samuel Gonzalez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xame2005/divelement-alternative-repo/issues"
+  },
+  "homepage": "https://github.com/xame2005/divelement-alternative-repo#readme"
 }
