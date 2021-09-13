@@ -1,5 +1,5 @@
 import React from 'react';
-import App, {PRODUCTS} from './App';
+import App from './App';
 import {render, fireEvent, cleanup, within} from '@testing-library/react';
 
 import '@testing-library/jest-dom/extend-expect';
@@ -12,84 +12,36 @@ afterEach(() => {
 });
 
 const IDMAPS = {
+    ADD_BTN: 'btn-quantity-add',
+    SUBTRACT_BTN: 'btn-quantity-subtract',
     ADD_TO_CART_BTN: 'btn-item-add',
-    REMOVE_FROM_CART_BTN: 'btn-item-remove',
-    CART_COUPON_SELECT: 'cart-coupon',
-    CART_ITEM_QUANTITY: 'cart-item-quantity',
-    CART_ITEM_NAME: 'cart-item-name',
-    PRODUCT_ITEMS: ['product-item-0', 'product-item-1', 'product-item-2', 'product-item-3', 'product-item-4', 'product-item-5'],
-    CART_ITEM_PRICE: 'cart-item-price',
-    CART_SUBTOTAL: 'cart-subtotal',
-    CART_DISCOUNT: 'cart-discount',
-    CART_TOTAL: 'cart-total'
-
+    QUANTITY_INPUT: 'cart-quantity',
+    CART_ITEM_QUANTITY : 'cart-item-quantity',
+    CART_ITEM_NAME : 'cart-item-name',
+    PRODUCT_ITEMS: ['product-item-0', 'product-item-1', 'product-item-2', 'product-item-3', 'product-item-4', 'product-item-5']
 }
 
-const addToCart = (item) => {
-    const addToCartButton = within(item).getByTestId(IDMAPS.ADD_TO_CART_BTN);
-    fireEvent.click(addToCartButton);
-}
-
-const removeFromCart = (item) => {
-    const removeFromCartButton = within(item).getByTestId(IDMAPS.REMOVE_FROM_CART_BTN);
-    fireEvent.click(removeFromCartButton);
-}
-
-const getCartItem = (index, getByTestId) => {
-    const cartListItem = getByTestId(`cart-item-${index}`)
-
-    const cartItemQuantity = within(cartListItem).getByTestId('cart-item-quantity');
-    const cartItemName = within(cartListItem).getByTestId('cart-item-name');
-    const cartItemPrice = within(cartListItem).getByTestId('cart-item-price');
-    return {
-        quantity: cartItemQuantity,
-        name: cartItemName.innerHTML,
-        price: parseInt(cartItemPrice.innerHTML.replace('$', '')),
-        node: cartListItem.innerHTML
-    }
-}
-
-const getCartDetails = (getByTestId) => {
-    return {
-        subTotal: parseInt(getByTestId(IDMAPS.CART_SUBTOTAL).innerHTML.replace('$', '')),
-        discount: parseInt(getByTestId(IDMAPS.CART_DISCOUNT).innerHTML.replace('$', '')),
-        total: parseInt(getByTestId(IDMAPS.CART_TOTAL).innerHTML.replace('$', '')),
-    };
-}
-
-const getDiscountValue = (product, value) => {
-    return (value / 100) * product.price;
-}
-
-const pushDiscountValue = (value, getByTestId) => {
-    const couponSelect = getByTestId(IDMAPS.CART_COUPON_SELECT);
-    couponSelect.value = value;
-    fireEvent.change(couponSelect, {
-        target: {value}
-    });
-};
-
-
-test('Should Add item to cart', async () => {
-    let addToCartButton, removeFromCartBtn, item;
+test('Add item to cart', async () => {
+    let addToCartButton, cartQuantity, item;
     const {
-        queryByTestId
+         queryByTestId
     } = renderApp();
     expect(queryByTestId('cart-item-0')).toBeNull();
     item = queryByTestId(IDMAPS.PRODUCT_ITEMS[1]);
     let utils = within(item);
 
     addToCartButton = utils.getByTestId(IDMAPS.ADD_TO_CART_BTN);
-    removeFromCartBtn = utils.queryByTestId(IDMAPS.REMOVE_FROM_CART_BTN);
+    cartQuantity = utils.queryByTestId(IDMAPS.QUANTITY_INPUT);
 
-    expect(removeFromCartBtn).toBeFalsy();
+    expect(cartQuantity).toBeFalsy();
     expect(addToCartButton).toBeTruthy();
 
     fireEvent.click(addToCartButton);
 
     addToCartButton = utils.queryByTestId(IDMAPS.ADD_TO_CART_BTN);
-    removeFromCartBtn = utils.getByTestId(IDMAPS.REMOVE_FROM_CART_BTN);
-    expect(removeFromCartBtn).toBeTruthy();
+    cartQuantity = utils.getByTestId(IDMAPS.QUANTITY_INPUT);
+    expect(cartQuantity).toBeTruthy();
+    expect(cartQuantity.value).toEqual('1');
     expect(addToCartButton).toBeFalsy();
 
     const cartItem = queryByTestId('cart-item-0');
@@ -97,107 +49,182 @@ test('Should Add item to cart', async () => {
 
     utils = within(cartItem);
     expect(utils.getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('1');
-    expect(utils.getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Hand Bag - $30');
+    expect(utils.getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('HandBag');
 });
 
-test('Should Calculate correct price before selecting coupon', () => {
-    let cartItem, cartDetails;
+test('Update quantity in cart', () => {
+    let addToCartButton, cartQuantity, item, addBtn, subtractBtn, cartItem;
     const {
-        queryByTestId,
-        getByTestId
+        queryByTestId
     } = renderApp();
+    item = queryByTestId(IDMAPS.PRODUCT_ITEMS[0]);
+    let utils = within(item);
+    addToCartButton = utils.getByTestId(IDMAPS.ADD_TO_CART_BTN);
 
-    addToCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[1]));
-    cartItem = getCartItem(0, getByTestId);
+    fireEvent.click(addToCartButton);
 
-    expect(cartItem.price).toEqual(PRODUCTS[1].price);
+    cartQuantity = utils.getByTestId(IDMAPS.QUANTITY_INPUT);
+    expect(cartQuantity).toBeTruthy();
+    expect(cartQuantity.value).toEqual('1');
 
-    cartDetails = getCartDetails(getByTestId);
+    addBtn = utils.getByTestId(IDMAPS.ADD_BTN);
+    subtractBtn = utils.getByTestId(IDMAPS.SUBTRACT_BTN);
 
-    expect(cartDetails.subTotal).toEqual(cartDetails.total);
-    expect(cartDetails.discount).toEqual(0);
-    expect(cartDetails.total).toEqual(PRODUCTS[1].price);
+    expect(addBtn).toBeTruthy();
+    expect(subtractBtn).toBeTruthy();
 
-    addToCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[2]));
-    cartItem = getCartItem(1, getByTestId);
-    expect(cartItem.price).toEqual(PRODUCTS[2].price);
+    fireEvent.click(addBtn);
 
-    cartDetails = getCartDetails(getByTestId);
-    expect(cartDetails.discount).toEqual(0);
-    expect(cartDetails.total).toEqual(PRODUCTS[1].price + PRODUCTS[2].price);
+    cartQuantity = utils.getByTestId(IDMAPS.QUANTITY_INPUT);
+    expect(cartQuantity.value).toEqual('2');
+
+    fireEvent.click(addBtn);
+    cartQuantity = utils.getByTestId(IDMAPS.QUANTITY_INPUT);
+    expect(cartQuantity.value).toEqual('3');
+
+    cartItem = queryByTestId('cart-item-0');
+    expect(cartItem).toBeTruthy();
+
+    utils = within(cartItem);
+    expect(utils.getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('3');
+    expect(utils.getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Cap');
+
+    fireEvent.click(subtractBtn);
+
+    utils = within(item);
+    cartQuantity = utils.getByTestId(IDMAPS.QUANTITY_INPUT);
+    expect(cartQuantity.value).toEqual('2');
+
+    cartItem = queryByTestId('cart-item-0');
+    expect(cartItem).toBeTruthy();
+
+    utils = within(cartItem);
+    expect(utils.getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('2');
+    expect(utils.getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Cap');
+
 })
 
-test('Should calculate discounts on selecting a coupon', () => {
-    let cartDetails;
+test('Remove item from cart', () => {
+    let addToCartButton, item, addBtn, subtractBtn, cartItem;
     const {
-        queryByTestId,
-        getByTestId
+        queryByTestId
     } = renderApp();
-    addToCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[3]));
-    pushDiscountValue('10', getByTestId);
-    cartDetails = getCartDetails(getByTestId);
-    let calculatedDiscount = getDiscountValue(PRODUCTS[3], 10);
-    expect(cartDetails.discount).toEqual(calculatedDiscount);
-    expect(cartDetails.subTotal).toEqual(PRODUCTS[3].price);
-    expect(cartDetails.total).toEqual(PRODUCTS[3].price - calculatedDiscount);
+    item = queryByTestId(IDMAPS.PRODUCT_ITEMS[2]);
+    let utils = within(item);
+    addToCartButton = utils.getByTestId(IDMAPS.ADD_TO_CART_BTN);
+
+    fireEvent.click(addToCartButton);
+
+    addBtn = utils.getByTestId(IDMAPS.ADD_BTN);
+    subtractBtn = utils.getByTestId(IDMAPS.SUBTRACT_BTN);
+
+    expect(addBtn).toBeTruthy();
+    expect(subtractBtn).toBeTruthy();
+
+    fireEvent.click(subtractBtn);
+
+    addBtn = utils.queryByTestId(IDMAPS.ADD_BTN);
+    subtractBtn = utils.queryByTestId(IDMAPS.SUBTRACT_BTN);
+    expect(addBtn).toBeFalsy();
+    expect(subtractBtn).toBeFalsy();
+    addToCartButton = utils.getByTestId(IDMAPS.ADD_TO_CART_BTN);
+    expect(addToCartButton).toBeTruthy();
+
+    cartItem = queryByTestId('cart-item-0');
+    expect(cartItem).toBeFalsy();
+
 })
 
-test('Should recalculate prices when item is removed from cart', () => {
-    let cartDetails;
+test('Performs Series of Actions', () => {
+    let addToCartButton, item, addBtn, subtractBtn, cartItem1, cartItem2, cartQuantity, utils;
     const {
-        queryByTestId,
-        getByTestId
+        queryByTestId
     } = renderApp();
-    addToCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[2]));
-    pushDiscountValue('20', getByTestId);
-    cartDetails = getCartDetails(getByTestId);
-    let calculatedDiscount = getDiscountValue(PRODUCTS[2], 20);
-    expect(cartDetails.discount).toEqual(calculatedDiscount);
-    expect(cartDetails.subTotal).toEqual(PRODUCTS[2].price);
-    expect(cartDetails.total).toEqual(PRODUCTS[2].price - calculatedDiscount);
+    item = queryByTestId(IDMAPS.PRODUCT_ITEMS[2]);
+    utils = within(item);
+    addToCartButton = utils.getByTestId(IDMAPS.ADD_TO_CART_BTN);
 
-    addToCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[3]));
-    cartDetails = getCartDetails(getByTestId);
-    calculatedDiscount += getDiscountValue(PRODUCTS[3], 20);
-    expect(cartDetails.discount).toEqual(calculatedDiscount);
-    expect(cartDetails.total).toEqual((PRODUCTS[3].price + PRODUCTS[2].price) - calculatedDiscount);
+    fireEvent.click(addToCartButton);
 
-    removeFromCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[2]))
-    cartDetails = getCartDetails(getByTestId);
-    calculatedDiscount -= getDiscountValue(PRODUCTS[2], 20);
-    expect(cartDetails.discount).toEqual(calculatedDiscount);
-    expect(cartDetails.total).toEqual((PRODUCTS[3].price) - calculatedDiscount);
-})
+    addBtn = utils.queryByTestId(IDMAPS.ADD_BTN);
+    subtractBtn = utils.queryByTestId(IDMAPS.SUBTRACT_BTN);
+    addToCartButton = utils.queryByTestId(IDMAPS.ADD_TO_CART_BTN);
+    cartQuantity = utils.getByTestId(IDMAPS.QUANTITY_INPUT);
 
-test('Should recalculate prices when coupon is changed', () => {
-    let cartDetails;
-    const {
-        queryByTestId,
-        getByTestId
-    } = renderApp();
-    addToCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[2]));
-    pushDiscountValue('20', getByTestId);
-    cartDetails = getCartDetails(getByTestId);
-    let calculatedDiscount = getDiscountValue(PRODUCTS[2], 20);
-    expect(cartDetails.discount).toEqual(calculatedDiscount);
-    expect(cartDetails.subTotal).toEqual(PRODUCTS[2].price);
-    expect(cartDetails.total).toEqual(PRODUCTS[2].price - calculatedDiscount);
+    expect(addBtn).toBeTruthy();
+    expect(subtractBtn).toBeTruthy();
+    expect(cartQuantity).toBeTruthy();
+    expect(addToCartButton).toBeFalsy();
 
-    addToCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[3]));
-    cartDetails = getCartDetails(getByTestId);
-    calculatedDiscount += getDiscountValue(PRODUCTS[3], 20);
-    expect(cartDetails.discount).toEqual(calculatedDiscount);
-    expect(cartDetails.total).toEqual((PRODUCTS[3].price + PRODUCTS[2].price) - calculatedDiscount);
+    cartItem1 = queryByTestId('cart-item-0');
+    expect(cartItem1).toBeTruthy();
 
-    removeFromCart(queryByTestId(IDMAPS.PRODUCT_ITEMS[2]))
-    cartDetails = getCartDetails(getByTestId);
-    calculatedDiscount -= getDiscountValue(PRODUCTS[2], 20);
-    expect(cartDetails.discount).toEqual(calculatedDiscount);
-    expect(cartDetails.total).toEqual((PRODUCTS[3].price) - calculatedDiscount);
 
-    pushDiscountValue('0', getByTestId);
-    cartDetails = getCartDetails(getByTestId);
-    expect(cartDetails.subTotal).toEqual((PRODUCTS[3].price));
-    expect(cartDetails.discount).toEqual(0);
-    expect(cartDetails.total).toEqual((PRODUCTS[3].price));
+    item = queryByTestId(IDMAPS.PRODUCT_ITEMS[3]);
+    utils = within(item);
+    addToCartButton = utils.getByTestId(IDMAPS.ADD_TO_CART_BTN);
+
+    fireEvent.click(addToCartButton);
+
+    addBtn = utils.queryByTestId(IDMAPS.ADD_BTN);
+    subtractBtn = utils.queryByTestId(IDMAPS.SUBTRACT_BTN);
+    addToCartButton = utils.queryByTestId(IDMAPS.ADD_TO_CART_BTN);
+    cartQuantity = utils.getByTestId(IDMAPS.QUANTITY_INPUT);
+
+    expect(addBtn).toBeTruthy();
+    expect(subtractBtn).toBeTruthy();
+    expect(cartQuantity).toBeTruthy();
+    expect(addToCartButton).toBeFalsy();
+
+    fireEvent.click(addBtn);
+
+    cartItem1 = queryByTestId('cart-item-0');
+    cartItem2 = queryByTestId('cart-item-1');
+    expect(cartItem1).toBeTruthy();
+    expect(cartItem2).toBeTruthy();
+
+    expect(within(cartItem1).getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('1');
+    expect(within(cartItem1).getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Shirt');
+
+    expect(within(cartItem2).getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('2');
+    expect(within(cartItem2).getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Shoe');
+
+    fireEvent.click(subtractBtn);
+
+    cartItem1 = queryByTestId('cart-item-0');
+    cartItem2 = queryByTestId('cart-item-1');
+    expect(cartItem1).toBeTruthy();
+    expect(cartItem2).toBeTruthy();
+
+    expect(within(cartItem1).getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('1');
+    expect(within(cartItem1).getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Shirt');
+
+    expect(within(cartItem2).getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('1');
+    expect(within(cartItem2).getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Shoe');
+
+    subtractBtn = within(queryByTestId(IDMAPS.PRODUCT_ITEMS[2])).getByTestId(IDMAPS.SUBTRACT_BTN);
+    fireEvent.click(subtractBtn);
+
+    cartItem1 = queryByTestId('cart-item-0');
+    cartItem2 = queryByTestId('cart-item-1');
+    expect(cartItem1).toBeTruthy();
+    expect(cartItem2).toBeFalsy();
+
+    item = queryByTestId(IDMAPS.PRODUCT_ITEMS[4]);
+    utils = within(item);
+    addToCartButton = utils.getByTestId(IDMAPS.ADD_TO_CART_BTN);
+
+    fireEvent.click(addToCartButton);
+
+    cartItem1 = queryByTestId('cart-item-0');
+    cartItem2 = queryByTestId('cart-item-1');
+    expect(cartItem1).toBeTruthy();
+    expect(cartItem2).toBeTruthy();
+
+    expect(within(cartItem1).getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('1');
+    expect(within(cartItem1).getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Shoe');
+
+    expect(within(cartItem2).getByTestId(IDMAPS.CART_ITEM_QUANTITY).innerHTML).toEqual('1');
+    expect(within(cartItem2).getByTestId(IDMAPS.CART_ITEM_NAME).innerHTML).toEqual('Pant');
+
 })

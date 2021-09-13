@@ -1,29 +1,5 @@
 import React, {Component} from 'react';
 import './App.css';
-import ProductList from "./components/product-list";
-import Cart from "./components/cart";
-import 'h8k-components';
-
-const title = "HackerShop";
-
-class App extends Component {
-    constructor() {
-        super();
-        const products = [...PRODUCTS].map((product, index) => {
-            product.id = index + 1;
-            product.image = `/images/items/${product.name.toLocaleLowerCase()}.png`;
-            product.cartQuantity = 0;
-            return product;
-        });
-        this.state = {
-            cart: {
-                items: [],
-                subTotal: 0,
-                totalPrice: 0,
-                discount: 0,
-                selectedCoupon: '0'
-import React, {Component} from 'react';
-import './App.css';
 import 'h8k-components';
 import ProductList from "./components/product-list";
 import Cart from "./components/cart";
@@ -88,34 +64,28 @@ class App extends Component {
 
 export const PRODUCTS = [
     {
-        heading: "Cap - $10",
         name: "Cap",
-        price: 10
+        price: 5
     },
     {
-        heading: "Hand Bag - $30",
         name: "HandBag",
         price: 30
     },
     {
-        heading: "Shirt - $30",
         name: "Shirt",
-        price: 30
+        price: 35
     },
     {
-        heading: "Shoes - $50",
         name: "Shoe",
         price: 50
     },
     {
-        heading: "Pant - $40",
         name: "Pant",
-        price: 40
+        price: 35
     },
     {
-        heading: "Slipper - $20",
         name: "Slipper",
-        price: 20
+        price: 25
     }
 ];
 export default App;
